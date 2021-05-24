@@ -1,12 +1,18 @@
 package com.mobiquity.service;
 
+import com.mobiquity.exception.APIException;
 import com.mobiquity.factory.ItemFactory;
 import com.mobiquity.factory.PackageFactory;
 import com.mobiquity.model.ItemDTO;
 import com.mobiquity.model.PackageDTO;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -14,18 +20,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
+@NoArgsConstructor
 public class ParseServiceImpl implements ParseService{
-
-    private static Logger log = LoggerFactory.getLogger(ParseServiceImpl.class);
 
     private final static Charset ENCODING = StandardCharsets.UTF_8;
 
+    private static Logger log = LoggerFactory.getLogger(ParseServiceImpl.class);
+    private static ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    private static Validator validator = factory.getValidator();
     private static ParseServiceImpl instance;
 
-    private ParseServiceImpl(){}
-
-    //static block initialization for exception handling
+    /**static block initialization for exception handling*/
     static{
         try{
             instance = new ParseServiceImpl();
@@ -34,10 +41,11 @@ public class ParseServiceImpl implements ParseService{
         }
     }
 
-    public static ParseServiceImpl getInstance(){
-        return instance;
-    }
-
+    /** Reads a File and parses the packages into a List of PackageDTO
+     *
+     * @param  file The path where the file is stored
+     * @return      a List of PackageDTO
+     */
     @Override
     public final List<PackageDTO> parseFile(File file) throws IOException {
         log.info("Parsing file {}", file);
@@ -50,7 +58,12 @@ public class ParseServiceImpl implements ParseService{
         return packages;
     }
 
-    protected PackageDTO processLine(String line){
+    /** Process a line of a file and returns the corresponding package
+     *
+     * @param  line The file's line
+     * @return      a PackageDTO
+     */
+    private PackageDTO processLine(String line){
         //use a second Scanner to parse the content of each line
         PackageDTO packageDTO = null;
         try(Scanner scanner = new Scanner(line)){
@@ -61,14 +74,22 @@ public class ParseServiceImpl implements ParseService{
                 String items = scanner.next();
                 log.info("Capacity is : " + capacity.trim() + ", and Items are : " + items.trim());
                 packageDTO = PackageFactory.createPackage(Integer.valueOf(capacity), processItems(items));
+                inputConstraints(packageDTO);
             }
             else {
                 log.info("Empty or invalid line. Unable to process.");
             }
+        } catch (APIException e) {
+            e.printStackTrace();
         }
         return packageDTO;
     }
 
+    /** Process the items on the given line
+     *
+     * @param  items The line's items
+     * @return      a list of ItemDTO
+     */
     private List<ItemDTO> processItems(String items){
         items = items.replaceAll("€", "")
                 .replaceAll(" ", "")
@@ -88,4 +109,24 @@ public class ParseServiceImpl implements ParseService{
         }
         return itemDTOList;
     }
+
+    /** Checks the constraints on everyDTO
+     *
+     * @param  packageDTO the package to validate
+     */
+    private void inputConstraints(PackageDTO packageDTO) throws APIException {
+        Set<ConstraintViolation<PackageDTO>> violations = validator.validate(packageDTO);
+        for (ConstraintViolation<PackageDTO> violation : violations) {
+            throw new APIException("Constraints issue: " + violation.getMessage());
+        }
+    }
+
+    /** Returns the Singleton instance for this class
+     *
+     * @return      ParseServiceImpl's instance
+     */
+    public static ParseServiceImpl getInstance(){
+        return instance;
+    }
 }
+

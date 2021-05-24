@@ -5,6 +5,7 @@ import com.mobiquity.model.ItemDTO;
 import com.mobiquity.model.PackageDTO;
 import com.mobiquity.service.FileServiceImpl;
 import com.mobiquity.service.ParseServiceImpl;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,51 +13,62 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+@NoArgsConstructor
 public class Packer {
 
-  private static Logger log = LoggerFactory.getLogger(Packer.class);
   private static final Integer GRAMS_IN_KILO = 100;
 
+  private static Logger log = LoggerFactory.getLogger(Packer.class);
   private static FileServiceImpl fileService = FileServiceImpl.getInstance();
   private static ParseServiceImpl parseService = ParseServiceImpl.getInstance();
 
-  private Packer() {
-  }
-
-//  public Packer(FileServiceImpl fileService, ParseServiceImpl parseService){
-//    this.fileService = fileService;
-//    this.parseService =  parseService;
-//  }
-
+  /** Receives a file with packages and items. Returns the most beneficial combination
+   *
+   * @param  filePath The path where the file is stored
+   * @return The solution
+   */
   public static String pack(String filePath) throws APIException{
     log.info("Packing {}", filePath);
-    List<PackageDTO> packages = preparePackages(filePath);
     StringBuilder sb = new StringBuilder();
-    for(PackageDTO packageDTO : packages){
-      List<Integer> packDPSolution = packDPInit(packageDTO);
-      sb.append(packDPSolution.size() != 0 ? packDPSolution.toString() : "-");
-      sb.append("\n");
+    try{
+      List<PackageDTO> packages = preparePackages(filePath);
+      for(PackageDTO packageDTO : packages){
+        List<Integer> packDPSolution = packDPInit(packageDTO);
+        sb = parseEmptySolution(sb, packDPSolution);
+      }
+    }catch (APIException e) {
+      throw e;
     }
-    return sb.toString().replace("[", "").replace("]","").trim();
+    String res = trimSolution(sb);
+    fileService.writeToPath(filePath, res);
+    return res;
   }
 
-  private static List<PackageDTO> preparePackages(String filePath) {
-    List<PackageDTO> packageDTOS = new ArrayList<>();
+  /** Opens file and parses it into a List of Packages to be sorted
+    *
+    * @param filePath path where the file is located
+    *  @return A list with the Packages
+   */
+  private static List<PackageDTO> preparePackages(String filePath) throws APIException{
+    List<PackageDTO> packageDTOS = null;
     try {
       File input = fileService.openFile(filePath);
       packageDTOS = parseService.parseFile(input);
     }catch (IOException e) {
-      e.printStackTrace();
+      throw new APIException("File not found", e);
     }
     return packageDTOS;
   }
 
-  /*  https://en.wikipedia.org/wiki/Knapsack_problem#0-1_knapsack_problem
-
-      This problem is a variation of the 0-1 knapsack problem.
-      It runs on pseudo polynomial time if it's solved through dynamic programming.
-
-      It's complexity is O(n*W) both on space and time, being n the amount of items and W the capacity on the package
+  /**
+    * https://en.wikipedia.org/wiki/Knapsack_problem#0-1_knapsack_problem
+    *
+    * This problem is a variation of the 0-1 knapsack problem.
+    * It runs on pseudo polynomial time if it's solved through dynamic programming.
+    *
+    * It's complexity is O(n*W) both on space and time, being n the amount of items and W the capacity on the package
+    * @param packageDTO package to be packed
+   *  @return A list with the indexes of the best items
   */
   private static List<Integer> packDPInit(PackageDTO packageDTO) {
     // Declare the table dynamically
@@ -82,14 +94,14 @@ public class Packer {
     return optimalChoice;
   }
 
-  /* A recursive Top-Down continuation on the previous init function
-      parameters:
-      - capacity: The capacity of the package
-      - weights: The items weights (same order as items)
-      - items: The items list
-      - n: The size of items
-      - mem: memoization structure
-      - optimalChoice = A list where the optimal solution will be stored
+  /** A recursive Top-Down continuation on the previous init function
+    *
+    * @param capacity: The capacity of the package
+    * @param weights: The items weights (same order as items)
+    * @param items: The items list
+    * @param n: The size of items
+    * @param mem: memoization structure
+    * @param optimalChoice = A list where the optimal solution will be stored
    */
   private static Integer packDPRec(Integer capacity, List<Integer> weights, List<ItemDTO> items, Integer n, Integer[][] mem, List<Integer> optimalChoice) {
     // Base condition
@@ -123,5 +135,25 @@ public class Packer {
       }
       return mem[n][capacity];
     }
+  }
+
+  /** Replaces certain characters that shouldn't be displayed in the solution
+   *
+   * @param sb: StringBuilder with the solution about to be returned
+   * @return The problem's solution trimmed
+   */
+  private static String trimSolution(StringBuilder sb) {
+      return sb.toString().replace("[", "").replace("]","").trim();
+  }
+
+  /** Replaces empty solutions with a '-' char
+   *
+   * @param sb: StringBuilder with some of the solutions
+   * @return The problem's solution without '-'
+   */
+  private static StringBuilder parseEmptySolution(StringBuilder sb, List<Integer> packDPSolution) {
+    sb.append(packDPSolution.size() != 0 ? packDPSolution.toString() : "-");
+    sb.append("\n");
+    return sb;
   }
 }
