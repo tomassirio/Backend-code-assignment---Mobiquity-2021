@@ -125,9 +125,9 @@ public class Packer {
       List<Integer> optimalChoiceExcluded = new ArrayList<>();
       Integer valueIncluded = items.get(n - 1).getValue() + packDPRec(capacity - weights.get(n - 1), weights, items, n - 1, mem, optimalChoiceIncluded);
       Integer valueExcluded = packDPRec(capacity, weights, items, n - 1, mem, optimalChoiceExcluded);
-      if (valueIncluded > valueExcluded){
+      if (valueIncluded > valueExcluded) {
         optimalChoice.addAll(optimalChoiceIncluded);
-        optimalChoice.add(items.get(n-1).getId());
+        optimalChoice.add(items.get(n - 1).getId());
         mem[n][capacity] = valueIncluded;
       }else{
         optimalChoice.addAll(optimalChoiceExcluded);
