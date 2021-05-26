@@ -76,7 +76,7 @@ public class ParseServiceImpl implements ParseService{
                 String items = scanner.next();
                 log.info("Capacity is : " + capacity.trim() + ", and Items are : " + items.trim());
                 packageDTO = PackageFactory.createPackage(Integer.valueOf(capacity), processItems(items));
-                inputConstraints(packageDTO);
+                packageInputConstraints(packageDTO);
             }
             else {
                 log.info("Empty or invalid line. Unable to process.");
@@ -92,7 +92,7 @@ public class ParseServiceImpl implements ParseService{
      * @param  items The line's items
      * @return      a list of ItemDTO
      */
-    private List<ItemDTO> processItems(String items){
+    private List<ItemDTO> processItems(String items) throws APIException {
         items = items.replaceAll("€", "")
                 .replaceAll(" ", "")
                 .replaceAll("\\)", "")
@@ -107,18 +107,30 @@ public class ParseServiceImpl implements ParseService{
                     Integer.valueOf(itemParts[0]),
                     Double.valueOf(itemParts[1]),
                     Integer.valueOf(itemParts[2]));
+            itemInputConstraints(item);
             itemDTOList.add(item);
         }
         return itemDTOList;
     }
 
-    /** Checks the constraints on everyDTO
+    /** Checks the constraints on every packageDTO
      *
      * @param  packageDTO the package to validate
      */
-    private void inputConstraints(PackageDTO packageDTO) throws APIException {
+    private void packageInputConstraints(PackageDTO packageDTO) throws APIException {
         Set<ConstraintViolation<PackageDTO>> violations = validator.validate(packageDTO);
         for (ConstraintViolation<PackageDTO> violation : violations) {
+            throw new APIException("Constraints issue: " + violation.getMessage());
+        }
+    }
+
+    /** Checks the constraints on every itemDTO
+     *
+     * @param  itemDTO the package to validate
+     */
+    private void itemInputConstraints(ItemDTO itemDTO) throws APIException {
+        Set<ConstraintViolation<ItemDTO>> violations = validator.validate(itemDTO);
+        for (ConstraintViolation<ItemDTO> violation : violations) {
             throw new APIException("Constraints issue: " + violation.getMessage());
         }
     }
