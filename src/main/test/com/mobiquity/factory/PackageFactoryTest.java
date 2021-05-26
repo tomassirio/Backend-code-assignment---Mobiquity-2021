@@ -1,6 +1,5 @@
 package com.mobiquity.factory;
 
-import com.mobiquity.model.ItemDTO;
 import com.mobiquity.model.PackageDTO;
 import org.junit.Test;
 import org.junit.runner.RunWith;

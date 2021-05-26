@@ -1,5 +1,6 @@
 package com.mobiquity.service;
 
+import com.mobiquity.exception.APIException;
 import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +28,14 @@ public class FileServiceImpl implements FileService{
      * @return      The Given File
      */
     @Override
-    public File openFile(String path) {
+    public File openFile(String path) throws APIException {
         log.info("Opening file on path {}", path);
         File file = null;
         try {
             file = new File(path);
             FileInputStream fis = new FileInputStream(file);     //opens a connection to an actual file
         } catch (FileNotFoundException fileNotFoundException) {
-            fileNotFoundException.printStackTrace();
+            throw new APIException("File was not found", fileNotFoundException);
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
@@ -48,15 +49,17 @@ public class FileServiceImpl implements FileService{
      * @return      The Given File
      */
     @Override
-    public void writeToPath(String path, String input){
+    public void writeToPath(String path, String input) throws APIException {
         try {
             String outputPath = createOutputPath(path);
             log.info("Writing to file on path: {}", outputPath);
             FileWriter myWriter = new FileWriter(outputPath);
             myWriter.write(input);
             myWriter.close();
-        }catch (IOException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException fileNotFoundException) {
+            throw new APIException("File was not found", fileNotFoundException);
+        } catch (IOException e) {
+            throw new APIException("Can't write in this file", e);
         }
     }
 

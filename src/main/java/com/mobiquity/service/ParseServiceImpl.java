@@ -47,13 +47,15 @@ public class ParseServiceImpl implements ParseService{
      * @return      a List of PackageDTO
      */
     @Override
-    public final List<PackageDTO> parseFile(File file) throws IOException {
+    public final List<PackageDTO> parseFile(File file) throws APIException {
         log.info("Parsing file {}", file);
         List<PackageDTO> packages = new ArrayList<>();
         try (Scanner scanner =  new Scanner(file, ENCODING)){
             while (scanner.hasNextLine()){
                 packages.add(processLine(scanner.nextLine()));
             }
+        }catch (IOException e) {
+            throw new APIException("Error parsing file", e);
         }
         return packages;
     }
@@ -63,7 +65,7 @@ public class ParseServiceImpl implements ParseService{
      * @param  line The file's line
      * @return      a PackageDTO
      */
-    private PackageDTO processLine(String line){
+    private PackageDTO processLine(String line) throws APIException{
         //use a second Scanner to parse the content of each line
         PackageDTO packageDTO = null;
         try(Scanner scanner = new Scanner(line)){
@@ -79,8 +81,8 @@ public class ParseServiceImpl implements ParseService{
             else {
                 log.info("Empty or invalid line. Unable to process.");
             }
-        } catch (APIException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new APIException("Error reading line", e);
         }
         return packageDTO;
     }

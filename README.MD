@@ -36,6 +36,16 @@ which create every new POJO.
    
 6. Testing was developed with PowerMock
 
+## Known issues ##
+
+1- There's an ignored test on the Packer File because I had an issue mocking the Validator and ValidatorFactory
+on the ParseServiceImpl instance
+
+2- For the same aforementioned reason, there's an ignored Test on the ParseServiceImplTest
+
+3- On the PackDP solution, I'm not returning the option that has the lowest weight. I couldn't find a way
+on my algorithm that could keep it's complexity and return that solution as well
+
 ## :bust_in_silhouette: Who Am I?
 
 <img src="https://media.discordapp.net/attachments/763140054825697301/763681938652528690/logo-design-branding-logo-tool-open-electronic-1-5f7ed02bc8247.png?width=468&height=468" width="410" height="410" /></p>

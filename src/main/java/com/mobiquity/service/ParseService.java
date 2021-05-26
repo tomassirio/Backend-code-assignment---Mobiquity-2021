@@ -1,9 +1,9 @@
 package com.mobiquity.service;
 
+import com.mobiquity.exception.APIException;
 import com.mobiquity.model.PackageDTO;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public interface ParseService {
@@ -13,5 +13,5 @@ public interface ParseService {
      * @param  file The path where the file is stored
      * @return      a List of PackageDTO
      */
-    List<PackageDTO> parseFile(File file) throws IOException;
+    List<PackageDTO> parseFile(File file) throws APIException;
 }

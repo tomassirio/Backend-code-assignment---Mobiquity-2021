@@ -3,6 +3,7 @@ package com.mobiquity.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 

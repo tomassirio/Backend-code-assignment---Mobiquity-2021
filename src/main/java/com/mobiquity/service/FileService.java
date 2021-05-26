@@ -1,5 +1,7 @@
 package com.mobiquity.service;
 
+import com.mobiquity.exception.APIException;
+
 import java.io.File;
 
 public interface FileService {
@@ -9,7 +11,7 @@ public interface FileService {
      * @param  path The path where the file is stored
      * @return      The Given File
      */
-    File openFile(String path);
+    File openFile(String path) throws APIException;
 
     /** Writes the input in the file stored in path.
      *
@@ -17,6 +19,6 @@ public interface FileService {
      * @param  input The path where the file is stored
      * @return      The Given File
      */
-    void writeToPath(String path, String input);
+    void writeToPath(String path, String input) throws APIException;
 
 }
